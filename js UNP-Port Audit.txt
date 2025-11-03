@@ -1,0 +1,43 @@
+<js>
+/*@@ UNP-Ports Prüfung für Module 2–6, only Ports 1–48 @@*/
+var sysName = "$SYS_NAME";
+var ipAddr = "$IP_ADDRESS";
+
+cli.sendCmd("show interface status");
+var ifResponse = cli.lastResponse();
+var allPorts = ifResponse.match(/\d+\/\d+\/\d+/g);
+var checkPorts = [];
+
+if (allPorts != null) {
+  for (var i = 0; i < allPorts.length; i++) {
+    var port = allPorts[i];
+    var parts = port.split("/");
+    if (parts.length === 3) {
+      var module = parseInt(parts[0]);
+      var slot = parseInt(parts[1]);
+      var portNum = parseInt(parts[2]);
+      if (module >= 2 && module <= 6 && slot === 1 && portNum >= 1 && portNum <= 48) {
+        checkPorts.push(port);
+      }
+    }
+  }
+}
+
+cli.sendCmd("show unp port");
+var unpResponse = cli.lastResponse();
+var unpPorts = unpResponse.match(/\d+\/\d+\/\d+/g);
+var unpCount = 0;
+
+if (unpPorts != null && checkPorts.length > 0) {
+  for (var j = 0; j < checkPorts.length; j++) {
+    if (unpPorts.indexOf(checkPorts[j]) !== -1) {
+      unpCount++;
+    }
+  }
+  if (unpCount !== checkPorts.length) {
+    cli.errorLog(sysName + " (" + ipAddr + "): [WARNING] NOT ALL ACCESS PORTS ARE UNP PORTS.");
+  } else {
+    cli.errorLog(sysName + " (" + ipAddr + "): [INFO] UNP USER PORTS OK.");
+  }
+}
+</js>
