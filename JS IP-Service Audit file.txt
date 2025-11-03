@@ -1,0 +1,51 @@
+<tapps> set timeout 0 10 </tapps>
+show ip service
+<js>
+var ipService = cli.lastResponse().toLowerCase();
+var sysName = "$SYS_NAME";
+var ipAddr = "$IP_ADDRESS";
+
+if (ipService.indexOf("http") !== -1) {
+    if (ipService.match(/http\s+\d+\s+enabled/) !== null) {
+        cli.errorLog(sysName + " (" + ipAddr + "): WARNUNG - HTTP Service enabled, bitte prüfen");
+    } else if (ipService.match(/http\s+\d+\s+disabled/) !== null) {
+        cli.errorLog(sysName + " (" + ipAddr + "): HTTP Service disabled");
+    }
+}
+if (ipService.indexOf("telnet") !== -1) {
+    if (ipService.match(/telnet\s+\d+\s+enabled/) !== null) {
+        cli.errorLog(sysName + " (" + ipAddr + "): WARNUNG - Telnet Service enabled, bitte prüfen");
+    } else if (ipService.match(/telnet\s+\d+\s+disabled/) !== null) {
+        cli.errorLog(sysName + " (" + ipAddr + "): Telnet Service disabled");
+    }
+}
+</js>
+
+<tapps> set timeout 0 10 </tapps>
+show aaa authentication
+<js>
+var aaaAuth = cli.lastResponse().toLowerCase();
+var sysName = "$SYS_NAME";
+var ipAddr = "$IP_ADDRESS";
+
+var services = aaaAuth.split("service type =");
+for (var i=0; i<services.length; i++) {
+  var block = services[i];
+
+  if (block.indexOf("telnet") !== -1) {
+    if (block.indexOf("authentication = denied") !== -1) {
+      cli.errorLog(sysName + " (" + ipAddr + "): AAA Telnet disabled");
+    } else {
+      cli.errorLog(sysName + " (" + ipAddr + "): WARNUNG - AAA Telnet local, bitte prüfen!");
+    }
+  }
+
+  if (block.indexOf("http") !== -1) {
+    if (block.indexOf("authentication = denied") !== -1) {
+      cli.errorLog(sysName + " (" + ipAddr + "): AAA HTTP disabled");
+    } else {
+      cli.errorLog(sysName + " (" + ipAddr + "): WARNUNG - AAA HTTP local, bitte prüfen!");
+    }
+  }
+}
+</js>
